@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Log de Performance</title>
+  <style>
+    :root {
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      --bg: #f6f7fb;
+      --text: #1f2937;
+      --muted: #667085;
+      --card: #ffffff;
+      --border: #e6e8ef;
+      --blue: #2563eb;
+      --green: #059669;
+      --red: #dc2626;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px 16px 30px;
+      display: grid;
+      gap: 14px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(16, 24, 40, 0.05);
+    }
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .top-row h1 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+    .top-row p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 14px;
+    }
+    @media (max-width: 920px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    h2, h3 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #d6dae6;
+      background: #fff;
+      color: var(--text);
+      padding: 10px 11px;
+      font-size: 14px;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+    .actions {
+      margin-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      font-weight: 700;
+      transition: filter 0.2s ease;
+    }
+    button:hover {
+      filter: brightness(1.03);
+    }
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    #btnSalvar {
+      background: var(--blue);
+      color: #fff;
+    }
+    #btnDiagnostico {
+      background: var(--green);
+      color: #fff;
+    }
+    .link-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .link-btn {
+      display: inline-block;
+      text-align: center;
+      text-decoration: none;
+      background: #fff;
+      color: #334155;
+      border: 1px solid #d8deea;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .metric {
+      border: 1px solid #e1e6f3;
+      border-radius: 10px;
+      padding: 10px;
+      background: #fafbff;
+    }
+    .metric .label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+    .metric .value {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .feedback-box {
+      border: 1px solid #d7deed;
+      border-left: 4px solid var(--green);
+      background: #fbfcff;
+      border-radius: 8px;
+      padding: 10px;
+      min-height: 58px;
+      line-height: 1.4;
+      font-size: 14px;
+    }
+    .response-title {
+      margin-top: 12px;
+      margin-bottom: 6px;
+    }
+    pre {
+      margin: 0;
+      background: #f8f9fe;
+      border: 1px solid #dde3f2;
+      color: #1f2937;
+      padding: 10px;
+      border-radius: 8px;
+      max-height: 240px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+    }
+    .toast {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      background: #111827;
+      color: #fff;
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .toast.error {
+      background: var(--red);
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="card top-row">
+      <div>
+        <h1>Log de Performance</h1>
+        <p>Anote seus blocos de foco e veja como seu dia está rendendo.</p>
+      </div>
+      <div class="link-row">
+        <a class="link-btn" href="/swagger" target="_blank" rel="noopener noreferrer">Abrir Swagger</a>
+        <a class="link-btn" href="/openapi.json" target="_blank" rel="noopener noreferrer">openapi.json</a>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Novo Registro</h2>
+        <p class="muted">Preencheu? Clica em salvar.</p>
+        <form id="formRegistro">
+          <label for="nivel_foco">Nível de foco (1 a 5)</label>
+          <input id="nivel_foco" type="number" min="1" max="5" required />
+
+          <label for="tempo_minutos">Tempo da sessão (minutos)</label>
+          <input id="tempo_minutos" type="number" min="1" required />
+
+          <label for="comentario">Comentário</label>
+          <textarea id="comentario" required></textarea>
+
+          <label for="categoria">Categoria</label>
+          <select id="categoria">
+            <option value="coding">coding</option>
+            <option value="reuniao">reuniao</option>
+            <option value="estudo">estudo</option>
+            <option value="outros" selected>outros</option>
+          </select>
+
+          <label for="tags">Tags (separadas por vírgula)</label>
+          <input id="tags" type="text" placeholder="backend, api, estudo" />
+          <p class="muted">Exemplo: backend, foco-profundo, sem-notificacoes</p>
+
+          <div class="actions">
+            <button id="btnSalvar" type="submit">Salvar registro</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="card">
+        <h2>Diagnóstico</h2>
+        <p class="muted">Resumo rápido com base no que já foi registrado.</p>
+        <div class="actions">
+          <button id="btnDiagnostico" type="button">Gerar diagnóstico</button>
+        </div>
+
+        <div class="metrics">
+          <div class="metric">
+            <div class="label">Média de foco</div>
+            <div id="mediaFoco" class="value">-</div>
+          </div>
+          <div class="metric">
+            <div class="label">Tempo total</div>
+            <div id="tempoTotal" class="value">-</div>
+          </div>
+          <div class="metric">
+            <div class="label">Total de registros</div>
+            <div id="totalRegistros" class="value">-</div>
+          </div>
+          <div class="metric">
+            <div class="label">Categoria principal</div>
+            <div id="categoriaPrincipal" class="value">-</div>
+          </div>
+        </div>
+
+        <h3>Feedback</h3>
+        <div id="feedback" class="feedback-box">Clique em "Gerar diagnóstico" para ver o feedback.</div>
+
+        <h3 class="response-title">Resposta da API</h3>
+        <pre id="saida">Sem requisições ainda.</pre>
+      </article>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const formRegistro = document.getElementById("formRegistro");
+    const btnSalvar = document.getElementById("btnSalvar");
+    const btnDiagnostico = document.getElementById("btnDiagnostico");
+    const saida = document.getElementById("saida");
+    const toast = document.getElementById("toast");
+
+    const mediaFoco = document.getElementById("mediaFoco");
+    const tempoTotal = document.getElementById("tempoTotal");
+    const totalRegistros = document.getElementById("totalRegistros");
+    const categoriaPrincipal = document.getElementById("categoriaPrincipal");
+    const feedback = document.getElementById("feedback");
+
+    function mostrarResultado(data) {
+      saida.textContent = JSON.stringify(data, null, 2);
+    }
+
+    function mostrarToast(message, isError = false) {
+      toast.textContent = message;
+      toast.classList.toggle("error", isError);
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+
+    async function parseResponse(response) {
+      const data = await response.json();
+      if (!response.ok) {
+        const detail = data && data.detail ? data.detail : "Erro inesperado na API.";
+        throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      }
+      return data;
+    }
+
+    function atualizarDiagnostico(data) {
+      mediaFoco.textContent = data.media_nivel_foco ?? "-";
+      tempoTotal.textContent = data.tempo_total_focado_minutos ? `${data.tempo_total_focado_minutos} min` : "-";
+      totalRegistros.textContent = data.total_registros ?? "-";
+      categoriaPrincipal.textContent = data.categoria_mais_frequente ?? "-";
+      feedback.textContent = data.feedback ?? "Sem feedback disponível.";
+    }
+
+    async function salvarRegistro(event) {
+      event.preventDefault();
+      btnSalvar.disabled = true;
+      btnSalvar.textContent = "Salvando...";
+
+      const tagsRaw = document.getElementById("tags").value.trim();
+      const payload = {
+        nivel_foco: Number(document.getElementById("nivel_foco").value),
+        tempo_minutos: Number(document.getElementById("tempo_minutos").value),
+        comentario: document.getElementById("comentario").value.trim(),
+        categoria: document.getElementById("categoria").value,
+        tags: tagsRaw ? tagsRaw.split(",").map((tag) => tag.trim()).filter(Boolean) : []
+      };
+
+      try {
+        const response = await fetch("/registro-foco", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await parseResponse(response);
+        mostrarResultado(data);
+        formRegistro.reset();
+        document.getElementById("categoria").value = "outros";
+        mostrarToast("Registro salvo.");
+      } catch (error) {
+        mostrarResultado({ erro: "Falha ao salvar registro", detalhe: String(error) });
+        mostrarToast(String(error), true);
+      } finally {
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = "Salvar registro";
+      }
+    }
+
+    async function gerarDiagnostico() {
+      btnDiagnostico.disabled = true;
+      btnDiagnostico.textContent = "Gerando...";
+      try {
+        const response = await fetch("/diagnostico-produtividade");
+        const data = await parseResponse(response);
+        atualizarDiagnostico(data);
+        mostrarResultado(data);
+        mostrarToast("Diagnóstico atualizado.");
+      } catch (error) {
+        mostrarResultado({ erro: "Falha ao gerar diagnóstico", detalhe: String(error) });
+        mostrarToast(String(error), true);
+      } finally {
+        btnDiagnostico.disabled = false;
+        btnDiagnostico.textContent = "Gerar diagnóstico";
+      }
+    }
+
+    formRegistro.addEventListener("submit", salvarRegistro);
+    btnDiagnostico.addEventListener("click", gerarDiagnostico);
+  </script>
+</body>
+</html>
